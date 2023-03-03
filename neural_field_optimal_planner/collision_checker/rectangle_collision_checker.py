@@ -14,10 +14,20 @@ class RectangleCollisionChecker(CollisionChecker):
         result &= x < self._box[1]
         result &= y > self._box[2]
         result &= y < self._box[3]
+        dist = []
+        # result is True if x and y give a collision
+
+        # for i in range(result.shape[0]):
+        #     for j in range(result.shape[1]):
+        #         if result[i, j] == True:
+        #             dist.append(x[i,j]- self._box[0])
+        # print("Dist:", np.min(np.array(dist)))
+
         return np.any(result, axis=1) | self._check_boundaries_collision(test_positions.translation)
 
     def _calculate_transformed_obstacle_points(self, positions):
         positions = positions.inv()
+        print(self._obstacle_points.shape)
         x, y = self._obstacle_points.T
         x1 = x[None, :] * np.cos(positions.rotation[:, None]) - y[None, :] * np.sin(
             positions.rotation[:, None]) + positions.x[:, None]

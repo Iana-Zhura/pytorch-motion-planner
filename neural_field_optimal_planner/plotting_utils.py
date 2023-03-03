@@ -3,11 +3,31 @@ import torch.nn.functional
 from matplotlib import pyplot as plt
 
 
-def plot_planner_data(plotted_trajectory, collision_model, boundaries, obstacle_points, device="cpu"):
+def plot_planner_data(plotted_trajectory, path_color, collision_model, boundaries, obstacle_points, device="cpu"):
     plot_model_heatmap(collision_model, boundaries, device)
     plot_obstacle_points(obstacle_points)
-    plt.scatter(plotted_trajectory[:, 0], plotted_trajectory[:, 1], color="yellow", s=10)
+   
+    plt.scatter(plotted_trajectory[:, 0], plotted_trajectory[:, 1], color=path_color, s=10)
     plt.tight_layout()
+
+    # for point in plotted_trajectory:
+    #     path_height_max = []
+    #     path_height_adjust = []
+    #     if point[3] == 0.4:
+    #         path_height_max.append([point[0], point[1]])
+    #     else:
+    #         path_height_adjust.append([point[0], point[1]])
+       
+    # path_height_max = np.array(path_height_max)
+    # path_height_adjust = np.array(path_height_adjust)
+    # print(path_height_adjust)
+    # plt.scatter(path_height_adjust[0][0], path_height_adjust[0][1], color="red", s=10)
+    # plt.scatter(path_height_max[0][0], path_height_max[0][1], color="yellow", s=10)
+    # plt.tight_layout()
+  
+
+    # plt.scatter(plotted_trajectory[:, 0], plotted_trajectory[:, 1], color="yellow", s=10)
+    # plt.tight_layout()
 
 
 def prepare_figure(boundaries):

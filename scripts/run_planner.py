@@ -5,16 +5,19 @@ from matplotlib import pyplot as plt
 from pytorch_lightning.utilities import AttributeDict
 
 import sys
-sys.path.append('/home/nipun/Desktop/iana_thesis/motion_planner/pytorch-motion-planner')
-sys.path.append('/home/nipun/Desktop/iana_thesis/motion_planner/pytorch-motion-planner/neural_field_optimal_planner')
-sys.path.append('/home/nipun/Desktop/iana_thesis/motion_planner/pytorch-motion-planner/neural_field_optimal_planner/astar')
-sys.path.append('/home/nipun/Desktop/iana_thesis/motion_planner/pytorch-motion-planner/neural_field_optimal_planner/utils')
+sys.path.append('/home/iana/pytorch-motion-planner')
+sys.path.append('/home/iana/pytorch-motion-planner/neural_field_optimal_planner')
+sys.path.append('/home/iana/pytorch-motion-planner/neural_field_optimal_planner/astar')
+sys.path.append('/home/iana/pytorch-motion-planner/neural_field_optimal_planner/utils')
 
 
 from neural_field_optimal_planner.collision_checker import CircleDirectedCollisionChecker, RectangleCollisionChecker
 from neural_field_optimal_planner.planner_factory import PlannerFactory
 from neural_field_optimal_planner.plotting_utils import *
 from neural_field_optimal_planner.test_environment_builder import TestEnvironmentBuilder
+from neural_field_optimal_planner.trajectory_3D import trajectory_to_3D
+from neural_field_optimal_planner.trajectory_3D import calculate_path
+from neural_field_optimal_planner.trajectory_2D import trajectory_to_2D
 
 torch.random.manual_seed(100)
 np.random.seed(400)
@@ -63,12 +66,15 @@ planner_parameters = AttributeDict(
 )
 
 
-# test_environment = TestEnvironmentBuilder().make_test_environment_with_angles()
 test_environment = TestEnvironmentBuilder().make_dog_environment()
+obs_map = TestEnvironmentBuilder().map.obstacle_map_adaptive_h
+voxel_size = TestEnvironmentBuilder().map.voxel_size
+robot_max_h = TestEnvironmentBuilder().map.ROB_MAX_H
+# test_environment = TestEnvironmentBuilder().make_car_environment()
 obstacle_points = test_environment.obstacle_points
 # collision_checker = CircleDirectedCollisionChecker(0.3, (0, 3, 0, 3))
 # collision_checker = RectangleCollisionChecker((-0.2, 0.2, -0.2, 0.2), (0, 3, 0, 3))
-collision_checker = RectangleCollisionChecker((-0.3, 0.2, -0.3, 0.2), (0, 3, 0, 3))
+collision_checker = RectangleCollisionChecker((-0.5, 0.5, -0.15, 0.15), (0, 6, 0, 6))
 collision_checker.update_obstacle_points(test_environment.obstacle_points)
 
 planner = PlannerFactory.make_constrained_onf_planner(collision_checker, planner_parameters)
@@ -84,9 +90,14 @@ fig = plt.figure(1, dpi=200)
 for i in range(1000):
     planner.step()
     trajectory = planner.get_path()
+    # print(trajectory.shape)
     fig.clear()
     prepare_figure(trajectory_boundaries)
-    plot_planner_data(trajectory, collision_model, trajectory_boundaries, obstacle_points, device=device)
+    # trajectory, path_color = trajectory_to_3D(trajectory, obs_map, voxel_size, robot_max_h)
+    path_color = trajectory_to_2D(trajectory, obs_map, voxel_size, robot_max_h)
+    dist_travel = calculate_path(trajectory, 0)
+    print("The distance:", dist_travel)
+    plot_planner_data(trajectory, path_color, collision_model, trajectory_boundaries, obstacle_points, device=device)
     # plot_nerf_opt_planner(planner)
     # plot_collision_positions(planner.checked_positions, planner.truth_collision)
     plt.pause(0.01)

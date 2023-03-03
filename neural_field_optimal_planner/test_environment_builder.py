@@ -1,10 +1,16 @@
 import numpy as np
 
 from .test_environment import TestEnvironment
-from extract_obs import MAP_FILTER
+from extract_obs import OBSTACLE_MAP
 
 
 class TestEnvironmentBuilder(object):
+    def __init__(self) -> None:
+        path_ply = '/home/iana/results-drone-dog/sample1.ply'
+        path_npz = '/home/iana/results-drone-dog/sample1.npz'
+        self.map = OBSTACLE_MAP(path_ply, path_npz)
+
+
     @staticmethod
     def make_test_environment():
         goal_point = np.array([2.5, 2.5], dtype=np.float32)
@@ -33,20 +39,34 @@ class TestEnvironmentBuilder(object):
         collision_points2[:, 1] += 1
         return np.concatenate([collision_points1, collision_points2], axis=0)
 
-    @staticmethod
-    def map_obstacle_points():
+    # @staticmethod
+    def map_obstacle_points_3D(self):
 
-        obstacle_x = []
-        obstacle_y = []
-
-        map = MAP_FILTER()
-        voxel_size = map.voxel_size
-        obstacle_map = map.obs_data()
+        obstacles = []
+        voxel_size = self.map.voxel_size
+        obstacle_map = self.map.obstacle_map_adaptive_h
         for x in range(obstacle_map.shape[0]):
             for y in range(obstacle_map.shape[1]):
-                obstacle_x.append(x*voxel_size)
-                obstacle_y.append(y*voxel_size) 
-        return np.concatenate([np.array(obstacle_x), np.array(obstacle_y)], axis=0)
+                if obstacle_map[x, y] == -1:    
+                    obstacles.append((y*voxel_size, x*voxel_size))
+                    # obstacle_y.append(y*voxel_size) 
+        return np.array(obstacles)
+
+
+
+     # @staticmethod
+    def map_obstacle_points_2D(self):
+
+        obstacles = []
+        voxel_size = self.map.voxel_size
+        obstacle_map = self.map.obstacle_map_adaptive_h
+        for x in range(obstacle_map.shape[0]):
+            for y in range(obstacle_map.shape[1]):
+                if (obstacle_map[x, y] < 0.4):  
+                    obstacles.append((y*voxel_size, x*voxel_size))
+                
+                
+        return np.array(obstacles)
 
     @staticmethod
     def _point_line(start, end, point_count):
@@ -55,12 +75,13 @@ class TestEnvironmentBuilder(object):
         return np.stack([x, y], axis=1)
 
     @staticmethod
-    def make_test_environment_with_angles():
+    def make_test_environment_with_angles(self):
         goal_point = np.array([2.5, 1.5, 0], dtype=np.float32)
         start_point = np.array([0.5, 0.5, 0], dtype=np.float32)
         trajectory_boundaries = (-0.1, 3.1, -0.1, 3.1)
+        
         return TestEnvironment(start_point, goal_point, trajectory_boundaries,
-                               TestEnvironmentBuilder._obstacle_points())
+                               TestEnvironmentBuilder.map_obstacle_points_2D(self))
 
     def make_car_environment(self):
         goal_point = np.array([2, 2.7, 0], dtype=np.float32)
@@ -71,11 +92,11 @@ class TestEnvironmentBuilder(object):
 
     
     def make_dog_environment(self):
-        goal_point = np.array([2, 2.7, 0], dtype=np.float32)
-        start_point = np.array([0.5, 1.5, 0], dtype=np.float32)
-        trajectory_boundaries = (-0.1, 3.1, -0.1, 3.1)
+        goal_point = np.array([4.4, 4.8, 0], dtype=np.float32)
+        start_point = np.array([4, 1.8, 0], dtype=np.float32)
+        trajectory_boundaries = (1., 8, 1., 8)
         return TestEnvironment(start_point, goal_point, trajectory_boundaries,
-                               TestEnvironmentBuilder._car_obstacle_points())
+                               TestEnvironmentBuilder.map_obstacle_points_2D(self))
 
     @staticmethod
     def _car_obstacle_points():
